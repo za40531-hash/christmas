@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Merry Christmas</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",system-ui,-apple-system;}
+body{
+  height:100vh;overflow:hidden;
+  display:flex;justify-content:center;align-items:center;
+}
+
+/* ===== 背景 ===== */
+body::before{
+  content:"";position:fixed;left:0;top:0;
+  width:50%;height:100vh;
+  background:url("bg1.jpg") center/cover no-repeat;
+  filter:blur(6px) brightness(.7);
+  transform:scale(1.08);z-index:-5;
+}
+body::after{
+  content:"";position:fixed;right:0;top:0;
+  width:50%;height:100vh;
+  background:url("bg2.jpg") center/cover no-repeat;
+  filter:blur(6px) brightness(.7);
+  transform:scale(1.08);z-index:-6;
+}
+.bg-blend{
+  position:fixed;inset:0;z-index:-4;
+  background:linear-gradient(to right,
+    rgba(0,0,0,.55),
+    rgba(0,0,0,.25),
+    rgba(0,0,0,.25),
+    rgba(0,0,0,.55));
+}
+
+/* ===== 掃光 ===== */
+.light-sweep{
+  position:fixed;inset:0;pointer-events:none;z-index:-3;
+  background:linear-gradient(120deg,
+    transparent 0%,
+    rgba(255,255,230,.35) 40%,
+    transparent 80%);
+  mix-blend-mode:screen;
+  animation:sweep 9s linear infinite;
+}
+@keyframes sweep{
+  0%{transform:translateX(-45%);opacity:0;}
+  30%{opacity:.8;}
+  60%{transform:translateX(45%);opacity:.5;}
+  100%{transform:translateX(90%);opacity:0;}
+}
+
+/* ===== 飄雪 ===== */
+.snow{position:fixed;inset:0;pointer-events:none;z-index:1;}
+.snow span{
+  position:absolute;top:-10vh;font-size:16px;opacity:.35;
+  animation:fall linear infinite;
+}
+@keyframes fall{to{transform:translateY(110vh);}}
+
+/* ===== 小遊戲 ===== */
+#game-start{
+  position:fixed;inset:0;z-index:999;
+  background:url("X-MAS.jpg") center/cover no-repeat;
+  box-shadow:inset 0 0 0 2000px rgba(0,0,0,.6);
+  backdrop-filter:blur(8px);
+  display:flex;flex-direction:column;
+  justify-content:center;align-items:center;
+  text-align:center;padding:20px;
+}
+.start-title{color:#fff;font-size:32px;font-weight:900;}
+.start-sub{color:#eee;margin:10px 0;}
+#mission{color:#ffdb99;font-size:18px;}
+.mission-snow{
+  position:absolute;font-size:44px;cursor:pointer;
+  transition:.2s;z-index:1000;
+}
+.fade-out{animation:fadeOut .8s forwards;}
+@keyframes fadeOut{to{opacity:0;visibility:hidden;}}
+
+/* ===== 卡片 ===== */
+.card{
+  width:92%;max-width:420px;
+  background:rgba(255,255,255,.93);
+  border-radius:20px;
+  padding:26px;text-align:center;
+  border:4px solid #0d8f47;
+  box-shadow:0 0 0 4px #e3ba52 inset,0 18px 40px rgba(0,0,0,.22);
+  position:relative;z-index:20;
+  transition:.8s;
+}
+.card.hide{opacity:0;transform:scale(.95);pointer-events:none;}
+#message{min-height:130px;white-space:pre-line;line-height:1.7;}
+button{
+  margin-top:18px;padding:12px 26px;
+  border:none;border-radius:999px;
+  background:linear-gradient(135deg,#ff8da6,#ffb3c7);
+  color:#fff;font-size:16px;cursor:pointer;
+}
+
+#secret{
+  position:absolute;top:-60px;left:50%;
+  transform:translateX(-50%) scale(.6);
+  font-size:28px;font-weight:800;
+  color:#ff9f40;opacity:0;
+}
+.showSecret{
+  animation:popIn 1.4s ease forwards,heartbeat 1.4s 1.4s infinite;
+}
+@keyframes popIn{
+  0%{opacity:0;transform:translateX(-50%) scale(.4);}
+  60%{opacity:1;transform:translateX(-50%) scale(1.12);}
+  100%{opacity:1;transform:translateX(-50%) scale(1);}
+}
+@keyframes heartbeat{
+  50%{transform:translateX(-50%) scale(1.08);}
+}
+
+/* ===== 回憶 ===== */
+#memories{
+  position:fixed;inset:0;z-index:30;
+  background:rgba(0,0,0,.55);
+  backdrop-filter:blur(6px);
+  display:flex;justify-content:center;align-items:center;
+  opacity:0;pointer-events:none;transition:1s;
+}
+#memories.show{opacity:1;pointer-events:auto;}
+
+/* 回憶內容容器：預設小張 */
+.memory{
+  text-align:center;
+  width:min(92vw, 360px);
+}
+.memory p{
+  color:#fff;margin-top:14px;font-size:15px;line-height:1.7;
+}
+
+/* ✅ 圖片框：用來控制「比例、置中、完整顯示」 */
+.mem-frame{
+  width:100%;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 16px 40px rgba(0,0,0,.45);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,.12);
+}
+.mem-frame img{
+  width:100%;
+  height:100%;
+  object-fit:cover; /* 預設照片照你原本風格 */
+  display:block;
+}
+
+/* 🔥 photo11~13：改成大張 + 固定比例 1748:1240 + 完整呈現不裁切 */
+.memory.is-large{
+  width:min(96vw, 1240px); /* 最大到 1240，手機就自動縮 */
+}
+.memory.is-large .mem-frame{
+  aspect-ratio: 1748 / 1240; /* ✅固定比例 */
+}
+.memory.is-large .mem-frame img{
+  object-fit:contain; /* ✅完整呈現，不裁切 */
+  background:transparent;
+}
+
+/* ===== 回憶按鈕 ===== */
+.mem-btn{
+  position:absolute;bottom:40px;
+  padding:10px 18px;border:none;
+  border-radius:999px;
+  background:rgba(255,255,255,.85);
+  font-size:14px;cursor:pointer;
+  box-shadow:0 6px 16px rgba(0,0,0,.25);
+}
+#prevBtn{left:30px;}
+#nextBtn{right:30px;}
+@media(max-width:768px){
+  .mem-btn{display:none;}
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg-blend"></div>
+<div class="light-sweep"></div>
+
+<div id="game-start">
+  <div class="start-title">🎮 聖誕互動模式</div>
+  <div class="start-sub">找到三片雪花才能開始</div>
+  <div id="mission">已找到：0 / 3</div>
+</div>
+
+<div class="snow" id="snow"></div>
+
+<div class="card" id="card">
+  <div id="secret">呆呆瓜瓜 & 奇奇怪怪 💞</div>
+  <h2>Merry Christmas 🎄</h2>
+  <h4 style="color:#777;">To：我家呆呆獸</h4>
+  <div id="message">想知道妳家瓜瓜要做什麼嗎？</div>
+  <button id="btn">下一段 💞</button>
+</div>
+
+<div id="memories">
+  <button id="prevBtn" class="mem-btn">← 上一頁</button>
+
+  <div class="memory" id="memoryWrap">
+    <div class="mem-frame" id="memFrame">
+      <img id="memory-img" alt="">
+    </div>
+    <p id="memory-text"></p>
+  </div>
+
+  <button id="nextBtn" class="mem-btn">下一頁 →</button>
+</div>
+
+<audio id="bgm" src="music.mp3" preload="auto" loop></audio>
+
+<script>
+/* 飄雪 */
+const snow=document.getElementById("snow");
+for(let i=0;i<80;i++){
+  const s=document.createElement("span");
+  s.textContent="❄";
+  s.style.left=Math.random()*100+"vw";
+  s.style.animationDuration=(6+Math.random()*6)+"s";
+  s.style.animationDelay=(Math.random()*5)+"s";
+  snow.appendChild(s);
+}
+
+/* 小遊戲 */
+let found=0;
+const mission=document.getElementById("mission");
+const game=document.getElementById("game-start");
+for(let i=0;i<3;i++){
+  const f=document.createElement("div");
+  f.className="mission-snow";f.textContent="❄";
+  f.style.left=(Math.random()*70+15)+"vw";
+  f.style.top=(Math.random()*60+20)+"vh";
+  f.onclick=()=>{
+    f.remove();found++;
+    mission.textContent=`已找到：${found} / 3`;
+    if(found===3){
+      game.classList.add("fade-out");
+      setTimeout(()=>game.style.display="none",800);
+    }
+  };
+  document.body.appendChild(f);
+}
+
+/* 音樂（避免瀏覽器擋自動播放） */
+const bgm=document.getElementById("bgm");
+function fadeMusic(){
+  let v=0;
+  bgm.volume=0;
+  bgm.play().catch(()=>{});
+  const t=setInterval(()=>{
+    v+=0.02; bgm.volume=Math.min(v,0.55);
+    if(v>=0.55) clearInterval(t);
+  },120);
+}
+
+/* 告白逐字（保持你原內容） */
+const messages=[
+  "\n呆呆，這是提前給妳的聖誕節驚喜,雖然妳的禮物還沒到,但該有的儀式感與驚喜感還是要有的,希望妳會喜歡,那就廢話不多說囉準備開始囉🎬⏮︎⏸︎⏭︎🎬。",
+  "\n呆呆，謝謝妳在今年闖進我的生活，讓我的生活變得更充實有趣,雖然有爭吵但也有開心的事情,但感情就是這樣,沒有原本就適合的♉❤️♌（妳懂得）。",
+  "\n我喜歡妳認真、耍小脾氣嘴硬傲嬌時的樣子。我不會討厭這樣的妳,反而覺得這樣的妳很可愛,我的小朋友妳真的很好，相信自己好嗎❤️❤️❤️（摸頭）。",
+  "\n不管工作多累、生活多煩躁，妳的瓜瓜牌充電寶都會在妳身邊,我會努力當那個讓妳安心的瓜瓜，我想讓妳知道，妳有我,妳不是一個人，不用硬撐好嗎💞💞💞。",
+  "\n最後最後絕對不能忘記跟妳說得...聖誕節快樂呀，呆呆，我對妳的感情是認真的，我會用行動去證明，往後也請多多指教囉 姊姊🫶🫶🫶🫶。",
+];
+
+let idx=0;
+const msg=document.getElementById("message");
+const btn=document.getElementById("btn");
+const card=document.getElementById("card");
+const secret=document.getElementById("secret");
+const memories=document.getElementById("memories");
+
+function typeText(text){
+  msg.textContent="";
+  let i=0;
+  const t=setInterval(()=>{
+    msg.textContent+=text[i++];
+    if(i>=text.length) clearInterval(t);
+  },60);
+}
+
+btn.onclick=()=>{
+  if(idx===0) fadeMusic();
+  if(idx<messages.length){
+    typeText(messages[idx++]);
+    if(idx===messages.length) btn.textContent="我喜歡你 ❤️";
+  }else{
+    secret.classList.add("showSecret");
+    card.classList.add("hide");
+    setTimeout(()=>{
+      memories.classList.add("show");
+      showMemory(0);
+    },800);
+  }
+};
+
+/* 回憶 */
+const memoryData=[
+  {img:"photo1.jpg",text:"第一次的告白驚喜失敗QQ 👉👈"},
+  {img:"photo2.jpg",text:"只要妳在旁邊，我就很安心 💞"},
+  {img:"photo3.jpg",text:"這個表情，我會一直記得"},
+  {img:"photo4.jpg",text:"被妳靠著的那一刻，我希望時間慢一點"},
+  {img:"photo5.jpg",text:"妳比了一半的心，我在心裡補上另一半(手有障礙的我🫶)"},
+  {img:"photo6.jpg",text:"猜猜看我牽妳的時候再想甚麼"},
+  {img:"photo7.jpg",text:"平凡的日子，因為妳變得不平凡(搞怪的我🤣🤣🤣)"},
+  {img:"photo8.jpg",text:"我很喜歡妳笑的時候，很可愛❣️❣️❣️"},
+  {img:"photo9.jpg",text:"有一種「靠著就很剛好」的感覺"},
+  {img:"photo10.jpg",text:"妳看著手機，我用手機看著妳"},
+  {img:"photo11.jpg",text:""},
+  {img:"photo12.jpg",text:""},
+  {img:"photo13.jpg",text:""}
+];
+
+let memIndex=0;
+const memImg=document.getElementById("memory-img");
+const memText=document.getElementById("memory-text");
+const memoryWrap=document.getElementById("memoryWrap");
+
+const prevBtn=document.getElementById("prevBtn");
+const nextBtn=document.getElementById("nextBtn");
+
+/* ✅ 指定哪些要用 1748:1240 大圖模式 */
+const LARGE_PHOTOS = new Set(["photo11.jpg","photo12.jpg","photo13.jpg"]);
+
+function showMemory(i){
+  memIndex=i;
+
+  const item = memoryData[i];
+  memImg.src=item.img;
+  memText.textContent=item.text;
+
+  // 大圖模式切換
+  if(LARGE_PHOTOS.has(item.img)){
+    memoryWrap.classList.add("is-large");
+  }else{
+    memoryWrap.classList.remove("is-large");
+  }
+
+  // 按鈕可用狀態（可選：讓使用者知道到頭了）
+  prevBtn.style.opacity = (memIndex===0) ? 0.5 : 1;
+  nextBtn.style.opacity = (memIndex===memoryData.length-1) ? 0.5 : 1;
+}
+
+/* 電腦按鈕 */
+prevBtn.onclick=()=>{ if(memIndex>0) showMemory(memIndex-1); };
+nextBtn.onclick=()=>{ if(memIndex<memoryData.length-1) showMemory(memIndex+1); };
+
+/* 鍵盤 */
+document.addEventListener("keydown",e=>{
+  if(!memories.classList.contains("show")) return;
+  if(e.key==="ArrowRight" && memIndex<memoryData.length-1) showMemory(memIndex+1);
+  if(e.key==="ArrowLeft" && memIndex>0) showMemory(memIndex-1);
+});
+
+/* 手機滑動 */
+let startX=0;
+memories.addEventListener("touchstart",e=>{ startX=e.touches[0].clientX; }, {passive:true});
+memories.addEventListener("touchend",e=>{
+  const dx=startX-e.changedTouches[0].clientX;
+  if(dx>50 && memIndex<memoryData.length-1) showMemory(memIndex+1);
+  if(dx<-50 && memIndex>0) showMemory(memIndex-1);
+}, {passive:true});
+</script>
+
+</body>
+</html>
